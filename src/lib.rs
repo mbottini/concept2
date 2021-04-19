@@ -1,3 +1,7 @@
+mod concept2command;
+mod consts;
+mod csafe;
+
 #[cfg(test)]
 mod tests {
     #[test]
