@@ -35,11 +35,24 @@ fn checksum(command: &Box<dyn Concept2Command>) -> u8 {
 }
 
 impl CSAFEFrame {
+    pub fn new(cmd: Box<dyn Concept2Command>) -> CSAFEFrame {
+        CSAFEFrame {
+            command: cmd
+        }
+    }
     pub fn to_vec(&self) -> Vec<u8> {
         std::iter::once(START_FLAG)
             .chain(self.command.to_vec().into_iter())
             .chain(std::iter::once(checksum(&self.command)))
             .chain(std::iter::once(STOP_FLAG))
             .collect()
+    }
+}
+
+mod tests {
+    #[test]
+    fn test_get_status() {
+        let cmd = crate::csafe::CSAFEFrame::new(Box::new(crate::concept2command::GetStatus));
+        assert_eq!(vec![0xf1, 0x80, 0x80, 0xf2], cmd.to_vec());
     }
 }

@@ -1,4 +1,4 @@
-use hidapi::HidApi;
+use hidapi::{HidApi, HidResult};
 
 fn main() {
     println!("Printing all available hid devices:");
@@ -6,7 +6,17 @@ fn main() {
     match HidApi::new() {
         Ok(api) => {
             for device in api.device_list() {
-                println!("{:04x}:{:04x}", device.vendor_id(), device.product_id());
+                if device.vendor_id() == concept2::consts::CONCEPT2_VENDOR_ID {
+                    println!("Found a device!");
+                    let csafe_cmd = concept2::csafe::CSAFEFrame::new(Box::new(concept2::concept2command::GetStatus));
+                    let result: HidResult<Vec<u8>> = device.open_device(&api)
+                        .and_then(|dev| concept2::hid_csafe::write_read_csafe_cmd(&dev, 3, &csafe_cmd));
+                    match result {
+                        Ok(v) => v.into_iter().for_each(|x| print!("{:x} ", x)),
+                        Err(e) => print!("{}", e),
+                    };
+                    println!("");
+                }
             }
         },
         Err(e) => {
