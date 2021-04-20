@@ -6,9 +6,9 @@ pub fn write_read_csafe_cmd(device: &HidDevice, report_num: u8, cmd: &csafe::CSA
     let msg: Vec<u8> = std::iter::once(report_num)
         .chain(cmd.to_vec().into_iter())
         .chain(std::iter::repeat(0))
-        .take(20)
+        .take(21)
         .collect();
-    let mut recv_result: Vec<u8> = vec![0; 20];
+    let mut recv_result: Vec<u8> = vec![0; 21];
     device.write(msg.as_slice())
         .map(|_| device.read(recv_result.as_mut_slice()))
         .map(|_| recv_result)

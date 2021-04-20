@@ -21,3 +21,10 @@ impl Concept2Command for GetVersion {
     }
 }
 
+pub struct GetSerial;
+
+impl Concept2Command for GetSerial {
+    fn to_vec(&self) -> Vec<u8> {
+        vec![0x94]
+    }
+}
