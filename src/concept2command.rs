@@ -1,3 +1,5 @@
+use crate::consts;
+
 pub trait Concept2Command {
     fn to_vec(&self) -> Vec<u8>;
 }
@@ -9,7 +11,7 @@ pub struct GetStatus;
 
 impl Concept2Command for GetStatus {
     fn to_vec(&self) -> Vec<u8> {
-        vec![0x80]
+        vec![consts::CsafeCommands::GetStatus as u8]
     }
 }
 
@@ -17,14 +19,14 @@ pub struct GetVersion;
 
 impl Concept2Command for GetVersion {
     fn to_vec(&self) -> Vec<u8> {
-        vec![0x91]
+        vec![consts::CsafeCommands::GetVersion as u8]
     }
 }
 
-pub struct GetSerial;
+pub struct GetSerialNumber;
 
-impl Concept2Command for GetSerial {
+impl Concept2Command for GetSerialNumber {
     fn to_vec(&self) -> Vec<u8> {
-        vec![0x94]
+        vec![consts::CsafeCommands::GetSerialNumber as u8]
     }
 }
