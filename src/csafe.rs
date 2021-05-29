@@ -25,17 +25,17 @@ const START_FLAG: u8 = 0xf1;
 const STOP_FLAG: u8 = 0xf2;
 
 pub struct CSAFEFrame {
-    command: Box<dyn Concept2Command>,
+    command: Concept2Command,
 }
 
-fn checksum(command: &Box<dyn Concept2Command>) -> u8 {
+fn checksum(command: &Concept2Command) -> u8 {
     command.to_vec()
         .into_iter()
         .fold(0, |x, y| x ^ y)
 }
 
 impl CSAFEFrame {
-    pub fn new(cmd: Box<dyn Concept2Command>) -> CSAFEFrame {
+    pub fn new(cmd: Concept2Command) -> CSAFEFrame {
         CSAFEFrame {
             command: cmd
         }
@@ -52,7 +52,7 @@ impl CSAFEFrame {
 mod tests {
     #[test]
     fn test_get_status() {
-        let cmd = crate::csafe::CSAFEFrame::new(Box::new(crate::concept2command::GetStatus));
+        let cmd = crate::csafe::CSAFEFrame::new(crate::concept2command::Concept2Command::GetStatus);
         assert_eq!(vec![0xf1, 0x80, 0x80, 0xf2], cmd.to_vec());
     }
 }

@@ -8,7 +8,7 @@ fn main() {
             for device in api.device_list() {
                 if device.vendor_id() == concept2::consts::CONCEPT2_VENDOR_ID {
                     println!("Found a device!");
-                    let csafe_cmd = concept2::csafe::CSAFEFrame::new(Box::new(concept2::concept2command::GetSerial));
+                    let csafe_cmd = concept2::csafe::CSAFEFrame::new(concept2::concept2command::Concept2Command::GetSerialNumber);
                     let result: HidResult<Vec<u8>> = device.open_device(&api)
                         .and_then(|dev| concept2::hid_csafe::write_read_csafe_cmd(&dev, 1, &csafe_cmd));
                     match result {
