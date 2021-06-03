@@ -14,15 +14,8 @@
 /// The Checksum is gotten by doing bitwise XOR (no carry) with all of the bytes in the command,
 /// not including the Start Flag or the Stop Flag.
 
-use std::boxed::Box;
-
 use crate::concept2command::Concept2Command;
-
-/// Start Flag for Standard Frames.
-const START_FLAG: u8 = 0xf1;
-
-/// Stop Flag for Frame. 
-const STOP_FLAG: u8 = 0xf2;
+use crate::consts;
 
 pub struct CSAFEFrame {
     command: Concept2Command,
@@ -41,10 +34,10 @@ impl CSAFEFrame {
         }
     }
     pub fn to_vec(&self) -> Vec<u8> {
-        std::iter::once(START_FLAG)
+        std::iter::once(consts::CSAFE_START_FLAG)
             .chain(self.command.to_vec().into_iter())
             .chain(std::iter::once(checksum(&self.command)))
-            .chain(std::iter::once(STOP_FLAG))
+            .chain(std::iter::once(consts::CSAFE_STOP_FLAG))
             .collect()
     }
 }
