@@ -13,5 +13,5 @@ pub const CSAFE_STOP_FLAG: u8 = 0xf2;
 pub mod CsafeCommands {
     pub const GetStatus: u8 = 0x80;
     pub const GetVersion: u8 = 0x91;
-    pub const GetSerialNumber: u8 = 0x92;
+    pub const GetUserID: u8 = 0x92;
 }

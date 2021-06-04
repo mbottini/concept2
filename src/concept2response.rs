@@ -4,7 +4,7 @@ use crate::consts;
 pub enum Concept2Response {
     GetStatus,
     GetVersion,
-    GetSerialNumber(String),
+    GetUserID(String),
 }
 
 pub struct ResponseFrame {
@@ -17,24 +17,13 @@ pub struct ResponseFrame {
 impl ResponseFrame {
     pub fn parse(self) -> Option<Concept2Response> {
         match self.identifier {
-            consts::CsafeCommands::GetSerialNumber => {
-                assert!(self.bytes == 9);
-                Some(Concept2Response::GetSerialNumber(String::from_utf8(self.data).expect("parse error")))
+            consts::CsafeCommands::GetUserID => {
+                assert!(self.bytes == 5);
+                Some(Concept2Response::GetUserID(String::from_utf8(self.data).expect("parse error")))
             },
             _ => None
         }
     }
-}
-
-fn unopt<T>(iter: &mut impl Iterator<Item = Option<T>>) -> Option<Vec<T>> {
-    let mut result: Vec<T> = vec![];
-    while let Some(v) = iter.next() {
-        match v {
-            Some(value) => result.push(value),
-            None => return None,
-        }
-    }
-    Some(result)
 }
 
 fn parse_c2r<'a, T>(iter: &mut T) -> Option<Concept2Response> 
@@ -77,7 +66,7 @@ fn parse_helper<'a>(iter: &mut impl Iterator<Item=&'a u8>) -> Option<Vec<Concept
 
 fn parse_vec(v: &Vec<u8>) -> Option<Vec<Concept2Response>> {
     let mut vec_iter = v.iter();
-    let report_num = vec_iter.next();
+    let _report_num = vec_iter.next();
     let start_flag = vec_iter.next();
     match start_flag {
         Some(&consts::CSAFE_START_FLAG) => parse_helper(&mut vec_iter),
@@ -85,12 +74,3 @@ fn parse_vec(v: &Vec<u8>) -> Option<Vec<Concept2Response>> {
     }
 }
 
-/*
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn parse_serial_number() {
-        assert_eq!(vec![super::Concept2Response::GetSerialNumber(""])
-    }
-}
-*/
