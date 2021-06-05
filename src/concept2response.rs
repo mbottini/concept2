@@ -5,6 +5,7 @@ pub enum Concept2Response {
     GetStatus,
     GetVersion,
     GetUserID(String),
+    GetSerialNumber(String),
 }
 
 pub struct ResponseFrame {
@@ -20,6 +21,12 @@ impl ResponseFrame {
             consts::CsafeCommands::GetUserID => {
                 assert!(self.bytes == 5);
                 Some(Concept2Response::GetUserID(
+                    String::from_utf8(self.data).expect("parse error"),
+                ))
+            }
+            consts::CsafeCommands::GetSerialNumber => {
+                assert!(self.bytes == 9);
+                Some(Concept2Response::GetSerialNumber(
                     String::from_utf8(self.data).expect("parse error"),
                 ))
             }
