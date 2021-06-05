@@ -1,4 +1,5 @@
 use crate::consts;
+use std::convert::TryInto;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Concept2Response {
@@ -6,6 +7,7 @@ pub enum Concept2Response {
     GetVersion,
     GetUserID(String),
     GetSerialNumber(String),
+    GetOdometer(u32, u8),
 }
 
 pub struct ResponseFrame {
@@ -29,6 +31,12 @@ impl ResponseFrame {
                 Some(Concept2Response::GetSerialNumber(
                     String::from_utf8(self.data).expect("parse error"),
                 ))
+            }
+            consts::CsafeCommands::GetOdometer => {
+                assert!(self.bytes == 5);
+                let distance: u32 = u32::from_le_bytes(self.data.iter().cloned().take(4).collect::<Vec<u8>>().as_slice().try_into().expect("incorrect slice length")); 
+                let units: u8 = *self.data.last().unwrap();
+                Some(Concept2Response::GetOdometer(distance, units))
             }
             _ => None,
         }
@@ -141,6 +149,17 @@ mod tests {
             Some(vec![super::Concept2Response::GetSerialNumber(String::from(
                 "430228525"
             ))]),
+            super::parse_vec(&v)
+        );
+    }
+
+    #[test]
+    fn test_parse_get_odometer() {
+        let v: Vec<u8> = vec![
+            0x1, 0xf1, 0x81, 0x9b, 0x5, 0xf4, 0x24, 0x21, 0x0, 0x24, 0xca, 0xf2
+        ];
+        assert_eq!(
+            Some(vec![super::Concept2Response::GetOdometer(2172148, 0x24)]),
             super::parse_vec(&v)
         );
     }
