@@ -73,11 +73,38 @@ fn checksum_iter<'a>(iter: impl Iterator<Item = &'a u8>) -> u8 {
     iter.fold(0, |acc, &x| x ^ acc)
 }
 
+fn unpack_bytes(v: &Vec<u8>) -> Vec<u8> {
+    let mut vec_iter = v.iter();
+    // Skipping the report number and the start flag.
+    let mut result: Vec<u8> = vec_iter.by_ref().take(2).cloned().collect();
+    while let Some(x) = vec_iter.next() {
+        match x {
+            0xf2 => {
+                result.push(0xf2);
+                return result;
+            }
+            0xf3 => match vec_iter.next() {
+                Some(&0x00) => result.push(0xf0),
+                Some(&0x01) => result.push(0xf1),
+                Some(&0x02) => result.push(0xf2),
+                Some(&0x03) => result.push(0xf3),
+                _ => {
+                    result.push(0xf3);
+                    return result;
+                }
+            },
+            x => result.push(*x),
+        }
+    }
+    result
+}
+
 fn parse_vec(v: &Vec<u8>) -> Option<Vec<Concept2Response>> {
-    let start_flag = v.iter().skip(1).next();
-    let end_flag = v.iter().rev().next();
-    let checksum = v.iter().rev().skip(1).next();
-    let length = v.len();
+    let unpacked_vec: Vec<u8> = unpack_bytes(v);
+    let start_flag = unpacked_vec.iter().skip(1).next();
+    let end_flag = unpacked_vec.iter().rev().next();
+    let checksum = unpacked_vec.iter().rev().skip(1).next();
+    let length = unpacked_vec.len();
     let actual_checksum = checksum_iter(v.iter().skip(2).take(length - 4));
     match (
         start_flag,

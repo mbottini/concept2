@@ -8,12 +8,14 @@ pub enum Concept2Command {
 }
 
 impl Concept2Command {
-    pub fn to_vec(&self) -> Vec<u8> {
+    pub fn iter(&self) -> impl Iterator<Item = u8> {
         match self {
-            Concept2Command::GetStatus => vec![consts::CsafeCommands::GetStatus as u8],
-            Concept2Command::GetVersion => vec![consts::CsafeCommands::GetVersion as u8],
-            Concept2Command::GetUserID => vec![consts::CsafeCommands::GetUserID as u8],
-            Concept2Command::GetSerialNumber => vec![consts::CsafeCommands::GetSerialNumber as u8],
+            Concept2Command::GetStatus => std::iter::once(consts::CsafeCommands::GetStatus),
+            Concept2Command::GetVersion => std::iter::once(consts::CsafeCommands::GetVersion),
+            Concept2Command::GetUserID => std::iter::once(consts::CsafeCommands::GetUserID),
+            Concept2Command::GetSerialNumber => {
+                std::iter::once(consts::CsafeCommands::GetSerialNumber)
+            }
         }
     }
 }
