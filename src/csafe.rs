@@ -17,11 +17,14 @@ use crate::concept2command::Concept2Command;
 use crate::consts;
 
 pub struct CSAFEFrame {
-    command: Concept2Command,
+    commands: Vec<Concept2Command>,
 }
 
-fn checksum(command: &Concept2Command) -> u8 {
-    command.iter().fold(0, |x, y| x ^ y)
+fn checksum(commands: &Vec<Concept2Command>) -> u8 {
+    commands
+        .iter()
+        .map(|v| v.iter().fold(0, |x, y| x ^ y))
+        .fold(0, |x, y| x ^ y)
 }
 
 fn stuff_bytes(x: u8) -> Box<dyn Iterator<Item = u8>> {
@@ -33,15 +36,18 @@ fn stuff_bytes(x: u8) -> Box<dyn Iterator<Item = u8>> {
         x => Box::new(std::iter::once(x)),
     }
 }
-
 impl CSAFEFrame {
-    pub fn new(cmd: Concept2Command) -> CSAFEFrame {
-        CSAFEFrame { command: cmd }
+    pub fn new(cmds: Vec<Concept2Command>) -> CSAFEFrame {
+        CSAFEFrame { commands: cmds }
     }
     pub fn to_vec(&self) -> Vec<u8> {
         std::iter::once(consts::CSAFE_START_FLAG)
-            .chain(self.command.iter().flat_map(|x| stuff_bytes(x)))
-            .chain(std::iter::once(checksum(&self.command)).flat_map(|x| stuff_bytes(x)))
+            .chain(
+                self.commands
+                    .iter()
+                    .flat_map(|c| c.iter().flat_map(|x| stuff_bytes(x))),
+            )
+            .chain(std::iter::once(checksum(&self.commands)).flat_map(|x| stuff_bytes(x)))
             .chain(std::iter::once(consts::CSAFE_STOP_FLAG))
             .collect()
     }
@@ -50,7 +56,8 @@ impl CSAFEFrame {
 mod tests {
     #[test]
     fn test_get_status() {
-        let cmd = crate::csafe::CSAFEFrame::new(crate::concept2command::Concept2Command::GetStatus);
+        let cmd =
+            crate::csafe::CSAFEFrame::new(vec![crate::concept2command::Concept2Command::GetStatus]);
         assert_eq!(vec![0xf1, 0x80, 0x80, 0xf2], cmd.to_vec());
     }
 }
