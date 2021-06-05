@@ -104,4 +104,17 @@ mod tests {
             super::parse_vec(&v)
         );
     }
+
+    #[test]
+    fn test_parse_get_serial_number() {
+        let v: Vec<u8> = vec![
+            0x1, 0xf1, 0x81, 0x94, 0x9, 0x34, 0x33, 0x30, 0x32, 0x32, 0x38, 0x35, 0x32, 0x35, 0x21, 0xf2
+        ];
+        assert_eq!(
+            Some(vec![super::Concept2Response::GetSerialNumber(String::from(
+                "430228525"
+            ))]),
+            super::parse_vec(&v)
+        );
+    }
 }
