@@ -12,12 +12,14 @@ pub enum Concept2Command {
 #[derive(Clone, PartialEq, Eq)]
 pub enum Concept2ProprietaryCommand {
     GetWorkoutType,
+    GetWorkTime,
     GetWorkDistance,
 }
 
 impl From<Concept2ProprietaryCommand> for u8 {
     fn from(c: Concept2ProprietaryCommand) -> Self {
         match c {
+            Concept2ProprietaryCommand::GetWorkTime => consts::csafe_commands::GET_WORK_TIME,
             Concept2ProprietaryCommand::GetWorkDistance => {
                 consts::csafe_commands::GET_WORK_DISTANCE
             }
@@ -29,6 +31,7 @@ impl From<Concept2ProprietaryCommand> for u8 {
 impl<'a> From<&'a Concept2ProprietaryCommand> for u8 {
     fn from(c: &'a Concept2ProprietaryCommand) -> Self {
         match c {
+            Concept2ProprietaryCommand::GetWorkTime => consts::csafe_commands::GET_WORK_TIME,
             Concept2ProprietaryCommand::GetWorkDistance => {
                 consts::csafe_commands::GET_WORK_DISTANCE
             }

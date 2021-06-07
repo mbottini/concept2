@@ -13,12 +13,12 @@ pub enum Concept2Response {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Concept2ResponseProprietary {
+    GetWorkTime(u32, u8),
     GetWorkDistance(u32, u8),
     GetWorkoutType(u8),
 }
 
 pub struct ResponseFrame {
-    _status: u8,
     identifier: u8,
     bytes: u8,
     data: Vec<u8>,
@@ -65,6 +65,23 @@ fn parse_proprietary(vec: Vec<u8>) -> Option<Concept2Response> {
     let mut vec_iter = vec.into_iter();
     while let Some(identifier) = vec_iter.next() {
         match identifier {
+            consts::csafe_commands::GET_WORK_TIME => {
+                if vec_iter.next() != Some(5) {
+                    return None;
+                }
+                proprietary_vec.push(Concept2ResponseProprietary::GetWorkTime(
+                    u32::from_le_bytes(
+                        vec_iter
+                            .by_ref()
+                            .take(4)
+                            .collect::<Vec<u8>>()
+                            .as_slice()
+                            .try_into()
+                            .expect("incorrect slice length"),
+                    ),
+                    vec_iter.next().unwrap(),
+                ));
+            }
             consts::csafe_commands::GET_WORK_DISTANCE => {
                 if vec_iter.next() != Some(5) {
                     return None;
@@ -102,15 +119,13 @@ fn parse_c2r<'a, T>(iter: &mut T) -> Option<Concept2Response>
 where
     T: Iterator<Item = &'a u8>,
 {
-    let status = iter.next();
     let identifier = iter.next();
     let bytes = iter.next();
-    match (status, identifier, bytes) {
-        (Some(s), Some(i), Some(b)) => {
+    match (identifier, bytes) {
+        (Some(i), Some(b)) => {
             let data: Vec<u8> = iter.take(usize::from(*b)).copied().collect();
             if data.len() == usize::from(*b) {
                 ResponseFrame {
-                    _status: *s,
                     identifier: *i,
                     bytes: *b,
                     data,
@@ -175,7 +190,7 @@ pub fn parse_vec(v: &[u8]) -> Option<Vec<Concept2Response>> {
         checksum.map(|x| *x == actual_checksum),
     ) {
         (Some(&consts::CSAFE_START_FLAG), Some(&consts::CSAFE_STOP_FLAG), Some(true)) => {
-            parse_helper(&mut v.iter().skip(2).take(length - 4))
+            parse_helper(&mut v.iter().skip(3).take(length - 5))
         }
         _ => None,
     }
@@ -244,6 +259,26 @@ mod tests {
                 super::Concept2ResponseProprietary::GetWorkDistance(0, 0),
                 super::Concept2ResponseProprietary::GetWorkoutType(8)
             ])]),
+            super::parse_vec(&v)
+        );
+    }
+
+    #[test]
+    fn test_compound_message() {
+        let v: Vec<u8> = vec![
+            0x1, 0xf1, 0x1, 0x1a, 0x11, 0xa0, 0x5, 0x0, 0x0, 0x0, 0x0, 0x0, 0xa3, 0x5, 0x0, 0x0,
+            0x0, 0x0, 0x0, 0x89, 0x1, 0x8, 0x94, 0x9, 0x34, 0x33, 0x30, 0x32, 0x32, 0x38, 0x35,
+            0x32, 0x35, 0x29, 0xf2,
+        ];
+        assert_eq!(
+            Some(vec![
+                super::Concept2Response::ProprietaryCommand(vec![
+                    super::Concept2ResponseProprietary::GetWorkTime(0, 0),
+                    super::Concept2ResponseProprietary::GetWorkDistance(0, 0),
+                    super::Concept2ResponseProprietary::GetWorkoutType(8)
+                ]),
+                super::Concept2Response::GetSerialNumber(String::from("430228525"))
+            ]),
             super::parse_vec(&v)
         );
     }

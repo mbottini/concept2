@@ -17,5 +17,6 @@ pub mod csafe_commands {
     pub const GET_USER_ID: u8 = 0x92;
     pub const GET_SERIAL_NUMBER: u8 = 0x94;
     pub const GET_ODOMETER: u8 = 0x9b;
+    pub const GET_WORK_TIME: u8 = 0xa0;
     pub const GET_WORK_DISTANCE: u8 = 0xa3;
 }
