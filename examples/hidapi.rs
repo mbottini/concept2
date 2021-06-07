@@ -9,7 +9,9 @@ fn main() {
                 if device.vendor_id() == concept2::consts::CONCEPT2_VENDOR_ID {
                     println!("Found a device!");
                     let csafe_cmd = concept2::csafe::CSAFEFrame::new(vec![
-                        concept2::concept2command::Concept2Command::GetHorizontal,
+                        concept2::concept2command::Concept2Command::ProprietaryCommand(vec![
+                            concept2::concept2command::Concept2ProprietaryCommand::GetWorkDistance,
+                        ]),
                     ]);
                     let result: HidResult<Vec<u8>> = device.open_device(&api).and_then(|dev| {
                         concept2::hid_csafe::write_read_csafe_cmd(&dev, 1, &csafe_cmd)

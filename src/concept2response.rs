@@ -8,6 +8,12 @@ pub enum Concept2Response {
     GetUserID(String),
     GetSerialNumber(String),
     GetOdometer(u32, u8),
+    ProprietaryCommand(Vec<Concept2ResponseProprietary>),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Concept2ResponseProprietary {
+    GetWorkDistance(u32, u8),
 }
 
 pub struct ResponseFrame {
@@ -34,13 +40,53 @@ impl ResponseFrame {
             }
             consts::CsafeCommands::GetOdometer => {
                 assert!(self.bytes == 5);
-                let distance: u32 = u32::from_le_bytes(self.data.iter().cloned().take(4).collect::<Vec<u8>>().as_slice().try_into().expect("incorrect slice length")); 
+                let distance: u32 = u32::from_le_bytes(
+                    self.data
+                        .iter()
+                        .cloned()
+                        .take(4)
+                        .collect::<Vec<u8>>()
+                        .as_slice()
+                        .try_into()
+                        .expect("incorrect slice length"),
+                );
                 let units: u8 = *self.data.last().unwrap();
                 Some(Concept2Response::GetOdometer(distance, units))
             }
+            consts::CsafeCommands::ProprietaryCommand => parse_proprietary(self.data),
             _ => None,
         }
     }
+}
+
+fn parse_proprietary(vec: Vec<u8>) -> Option<Concept2Response> {
+    let mut proprietary_vec: Vec<Concept2ResponseProprietary> = Vec::new();
+    let mut vec_iter = vec.into_iter();
+    while let Some(identifier) = vec_iter.next() {
+        match identifier {
+            consts::CsafeCommands::GetWorkDistance => {
+                if vec_iter.next() != Some(5) {
+                    return None;
+                }
+                proprietary_vec.push(Concept2ResponseProprietary::GetWorkDistance(
+                    u32::from_le_bytes(
+                        vec_iter
+                            .by_ref()
+                            .take(4)
+                            .collect::<Vec<u8>>()
+                            .as_slice()
+                            .try_into()
+                            .expect("incorrect slice length"),
+                    ),
+                    vec_iter.next().unwrap(),
+                ));
+            }
+            _ => {
+                return None;
+            }
+        }
+    }
+    Some(Concept2Response::ProprietaryCommand(proprietary_vec))
 }
 
 fn parse_c2r<'a, T>(iter: &mut T) -> Option<Concept2Response>
@@ -113,7 +159,7 @@ fn parse_vec(v: &Vec<u8>) -> Option<Vec<Concept2Response>> {
     let end_flag = unpacked_vec.iter().rev().next();
     let checksum = unpacked_vec.iter().rev().skip(1).next();
     let length = unpacked_vec.len();
-    let actual_checksum = checksum_iter(v.iter().skip(2).take(length - 4));
+    let actual_checksum = checksum_iter(unpacked_vec.iter().skip(2).take(length - 4));
     match (
         start_flag,
         end_flag,
@@ -143,12 +189,13 @@ mod tests {
     #[test]
     fn test_parse_get_serial_number() {
         let v: Vec<u8> = vec![
-            0x1, 0xf1, 0x81, 0x94, 0x9, 0x34, 0x33, 0x30, 0x32, 0x32, 0x38, 0x35, 0x32, 0x35, 0x21, 0xf2
+            0x1, 0xf1, 0x81, 0x94, 0x9, 0x34, 0x33, 0x30, 0x32, 0x32, 0x38, 0x35, 0x32, 0x35, 0x21,
+            0xf2,
         ];
         assert_eq!(
-            Some(vec![super::Concept2Response::GetSerialNumber(String::from(
-                "430228525"
-            ))]),
+            Some(vec![super::Concept2Response::GetSerialNumber(
+                String::from("430228525")
+            )]),
             super::parse_vec(&v)
         );
     }
@@ -156,10 +203,23 @@ mod tests {
     #[test]
     fn test_parse_get_odometer() {
         let v: Vec<u8> = vec![
-            0x1, 0xf1, 0x81, 0x9b, 0x5, 0xf4, 0x24, 0x21, 0x0, 0x24, 0xca, 0xf2
+            0x1, 0xf1, 0x81, 0x9b, 0x5, 0xf4, 0x24, 0x21, 0x0, 0x24, 0xca, 0xf2,
         ];
         assert_eq!(
             Some(vec![super::Concept2Response::GetOdometer(2172148, 0x24)]),
+            super::parse_vec(&v)
+        );
+    }
+
+    #[test]
+    fn test_parse_get_work_distance() {
+        let v: Vec<u8> = vec![
+            0x1, 0xf1, 0x1, 0x1a, 0x7, 0xa3, 0x5, 0x0, 0x0, 0x0, 0x0, 0x0, 0xba, 0xf2,
+        ];
+        assert_eq!(
+            Some(vec![super::Concept2Response::ProprietaryCommand(vec![
+                super::Concept2ResponseProprietary::GetWorkDistance(0, 0)
+            ])]),
             super::parse_vec(&v)
         );
     }
