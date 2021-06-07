@@ -162,7 +162,7 @@ fn unpack_bytes(v: &Vec<u8>) -> Vec<u8> {
     result
 }
 
-fn parse_vec(v: &Vec<u8>) -> Option<Vec<Concept2Response>> {
+pub fn parse_vec(v: &Vec<u8>) -> Option<Vec<Concept2Response>> {
     let unpacked_vec: Vec<u8> = unpack_bytes(v);
     let start_flag = unpacked_vec.iter().skip(1).next();
     let end_flag = unpacked_vec.iter().rev().next();
