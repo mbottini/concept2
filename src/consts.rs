@@ -12,6 +12,7 @@ pub const CSAFE_STOP_FLAG: u8 = 0xf2;
 pub mod csafe_commands {
     pub const PROPRIETARY_COMMAND: u8 = 0x1a;
     pub const GET_STATUS: u8 = 0x80;
+    pub const GET_WORKOUT_TYPE: u8 = 0x89;
     pub const GET_VERSION: u8 = 0x91;
     pub const GET_USER_ID: u8 = 0x92;
     pub const GET_SERIAL_NUMBER: u8 = 0x94;

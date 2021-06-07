@@ -14,10 +14,11 @@ pub enum Concept2Response {
 #[derive(Debug, PartialEq, Eq)]
 pub enum Concept2ResponseProprietary {
     GetWorkDistance(u32, u8),
+    GetWorkoutType(u8),
 }
 
 pub struct ResponseFrame {
-    status: u8,
+    _status: u8,
     identifier: u8,
     bytes: u8,
     data: Vec<u8>,
@@ -81,6 +82,14 @@ fn parse_proprietary(vec: Vec<u8>) -> Option<Concept2Response> {
                     vec_iter.next().unwrap(),
                 ));
             }
+            consts::csafe_commands::GET_WORKOUT_TYPE => {
+                if vec_iter.next() != Some(1) {
+                    return None;
+                }
+                proprietary_vec.push(Concept2ResponseProprietary::GetWorkoutType(
+                    vec_iter.next().unwrap(),
+                ))
+            }
             _ => {
                 return None;
             }
@@ -101,7 +110,7 @@ where
             let data: Vec<u8> = iter.take(usize::from(*b)).map(|&x| x).collect();
             if data.len() == usize::from(*b) {
                 ResponseFrame {
-                    status: *s,
+                    _status: *s,
                     identifier: *i,
                     bytes: *b,
                     data: data,
@@ -219,6 +228,21 @@ mod tests {
         assert_eq!(
             Some(vec![super::Concept2Response::ProprietaryCommand(vec![
                 super::Concept2ResponseProprietary::GetWorkDistance(0, 0)
+            ])]),
+            super::parse_vec(&v)
+        );
+    }
+
+    #[test]
+    fn test_parse_get_work_distance_and_workout_type() {
+        let v: Vec<u8> = vec![
+            0x1, 0xf1, 0x81, 0x1a, 0xa, 0xa3, 0x5, 0x0, 0x0, 0x0, 0x0, 0x0, 0x89, 0x1, 0x8, 0xb7,
+            0xf2,
+        ];
+        assert_eq!(
+            Some(vec![super::Concept2Response::ProprietaryCommand(vec![
+                super::Concept2ResponseProprietary::GetWorkDistance(0, 0),
+                super::Concept2ResponseProprietary::GetWorkoutType(8)
             ])]),
             super::parse_vec(&v)
         );

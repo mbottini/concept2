@@ -11,6 +11,7 @@ fn main() {
                     let csafe_cmd = concept2::csafe::CSAFEFrame::new(vec![
                         concept2::concept2command::Concept2Command::ProprietaryCommand(vec![
                             concept2::concept2command::Concept2ProprietaryCommand::GetWorkDistance,
+                            concept2::concept2command::Concept2ProprietaryCommand::GetWorkoutType,
                         ]),
                     ]);
                     let result: HidResult<Vec<u8>> = device.open_device(&api).and_then(|dev| {
