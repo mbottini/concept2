@@ -16,5 +16,5 @@ pub mod CsafeCommands {
     pub const GetUserID: u8 = 0x92;
     pub const GetSerialNumber: u8 = 0x94;
     pub const GetOdometer: u8 = 0x9b;
-    pub const GetHorizontal: u8 = 0xa1;
+    pub const GetHorizontal: u8 = 0xa3;
 }
