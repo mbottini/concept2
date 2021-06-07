@@ -26,19 +26,19 @@ pub struct ResponseFrame {
 impl ResponseFrame {
     pub fn parse(self) -> Option<Concept2Response> {
         match self.identifier {
-            consts::CsafeCommands::GetUserID => {
+            consts::csafe_commands::GET_USER_ID => {
                 assert!(self.bytes == 5);
                 Some(Concept2Response::GetUserID(
                     String::from_utf8(self.data).expect("parse error"),
                 ))
             }
-            consts::CsafeCommands::GetSerialNumber => {
+            consts::csafe_commands::GET_SERIAL_NUMBER => {
                 assert!(self.bytes == 9);
                 Some(Concept2Response::GetSerialNumber(
                     String::from_utf8(self.data).expect("parse error"),
                 ))
             }
-            consts::CsafeCommands::GetOdometer => {
+            consts::csafe_commands::GET_ODOMETER => {
                 assert!(self.bytes == 5);
                 let distance: u32 = u32::from_le_bytes(
                     self.data
@@ -53,7 +53,7 @@ impl ResponseFrame {
                 let units: u8 = *self.data.last().unwrap();
                 Some(Concept2Response::GetOdometer(distance, units))
             }
-            consts::CsafeCommands::ProprietaryCommand => parse_proprietary(self.data),
+            consts::csafe_commands::PROPRIETARY_COMMAND => parse_proprietary(self.data),
             _ => None,
         }
     }
@@ -64,7 +64,7 @@ fn parse_proprietary(vec: Vec<u8>) -> Option<Concept2Response> {
     let mut vec_iter = vec.into_iter();
     while let Some(identifier) = vec_iter.next() {
         match identifier {
-            consts::CsafeCommands::GetWorkDistance => {
+            consts::csafe_commands::GET_WORK_DISTANCE => {
                 if vec_iter.next() != Some(5) {
                     return None;
                 }

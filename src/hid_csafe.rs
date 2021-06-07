@@ -1,6 +1,5 @@
 use hidapi::{HidDevice, HidResult};
 
-use crate::concept2response;
 use crate::csafe;
 
 const MSG_LENGTH: usize = 121;
