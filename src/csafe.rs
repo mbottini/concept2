@@ -20,7 +20,7 @@ pub struct CSAFEFrame {
     commands: Vec<Concept2Command>,
 }
 
-fn checksum(commands: &Vec<Concept2Command>) -> u8 {
+fn checksum(commands: &[Concept2Command]) -> u8 {
     commands
         .iter()
         .map(|v| v.iter().fold(0, |x, y| x ^ y))
@@ -45,9 +45,9 @@ impl CSAFEFrame {
             .chain(
                 self.commands
                     .iter()
-                    .flat_map(|c| c.iter().flat_map(|x| stuff_bytes(x))),
+                    .flat_map(|c| c.iter().flat_map(stuff_bytes)),
             )
-            .chain(std::iter::once(checksum(&self.commands)).flat_map(|x| stuff_bytes(x)))
+            .chain(std::iter::once(checksum(&self.commands)).flat_map(stuff_bytes))
             .chain(std::iter::once(consts::CSAFE_STOP_FLAG))
             .collect()
     }

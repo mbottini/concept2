@@ -107,13 +107,13 @@ where
     let bytes = iter.next();
     match (status, identifier, bytes) {
         (Some(s), Some(i), Some(b)) => {
-            let data: Vec<u8> = iter.take(usize::from(*b)).map(|&x| x).collect();
+            let data: Vec<u8> = iter.take(usize::from(*b)).copied().collect();
             if data.len() == usize::from(*b) {
                 ResponseFrame {
                     _status: *s,
                     identifier: *i,
                     bytes: *b,
-                    data: data,
+                    data,
                 }
                 .parse()
             } else {
@@ -136,7 +136,7 @@ fn checksum_iter<'a>(iter: impl Iterator<Item = &'a u8>) -> u8 {
     iter.fold(0, |acc, &x| x ^ acc)
 }
 
-fn unpack_bytes(v: &Vec<u8>) -> Vec<u8> {
+fn unpack_bytes(v: &[u8]) -> Vec<u8> {
     let mut vec_iter = v.iter();
     // Skipping the report number and the start flag.
     let mut result: Vec<u8> = vec_iter.by_ref().take(2).cloned().collect();
@@ -162,11 +162,11 @@ fn unpack_bytes(v: &Vec<u8>) -> Vec<u8> {
     result
 }
 
-pub fn parse_vec(v: &Vec<u8>) -> Option<Vec<Concept2Response>> {
+pub fn parse_vec(v: &[u8]) -> Option<Vec<Concept2Response>> {
     let unpacked_vec: Vec<u8> = unpack_bytes(v);
-    let start_flag = unpacked_vec.iter().skip(1).next();
+    let start_flag = unpacked_vec.get(1);
     let end_flag = unpacked_vec.iter().rev().next();
-    let checksum = unpacked_vec.iter().rev().skip(1).next();
+    let checksum = unpacked_vec.iter().rev().nth(1);
     let length = unpacked_vec.len();
     let actual_checksum = checksum_iter(unpacked_vec.iter().skip(2).take(length - 4));
     match (

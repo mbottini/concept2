@@ -58,7 +58,7 @@ impl Concept2Command {
             Concept2Command::ProprietaryCommand(vec) => Box::new(
                 std::iter::once(consts::csafe_commands::PROPRIETARY_COMMAND)
                     .chain(std::iter::once(vec.len() as u8))
-                    .chain(vec.iter().map(|c| u8::from(c))),
+                    .chain(vec.iter().map(u8::from)),
             ),
         }
     }
