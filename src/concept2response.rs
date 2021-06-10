@@ -1,6 +1,11 @@
+/// Library for parsing vectors of bytes from the Concept2 machine into
+/// Concept2Response structs.
 use crate::consts;
 use std::convert::TryInto;
 
+/// All implemented (so far) responses that can be parsed from the machine.
+/// Note `ProprietaryCommand`, which contains a variety of Concept2-specific
+/// commands that are not part of the CSAFE specification.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Concept2Response {
     GetStatus,
@@ -11,6 +16,10 @@ pub enum Concept2Response {
     ProprietaryCommand(Vec<Concept2ResponseProprietary>),
 }
 
+/// Proprietary commands that are not part of the CSAFE specification. These
+/// commands are wrapped inside a special format byte. The Concept2 spec refers
+/// to this idea as a "long command" - that is, commands containing more than one
+/// byte.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Concept2ResponseProprietary {
     GetWorkTime(u32, u8),
@@ -18,6 +27,10 @@ pub enum Concept2ResponseProprietary {
     GetWorkoutType(u8),
 }
 
+/// A struct that contains all of the parts of a *single* ResponseFrame.
+/// When the bytes come back, each command is parsed as an identifier,
+/// the number of bytes of data that are incoming, and the data. This
+/// struct wraps those things to be parsed by the `parse` method.
 pub struct ResponseFrame {
     identifier: u8,
     bytes: u8,
@@ -60,6 +73,8 @@ impl ResponseFrame {
     }
 }
 
+/// Because these proprietary responses are nested inside a regular response,
+/// we need an additional function to parse them.
 fn parse_proprietary(vec: Vec<u8>) -> Option<Concept2Response> {
     let mut proprietary_vec: Vec<Concept2ResponseProprietary> = Vec::new();
     let mut vec_iter = vec.into_iter();
@@ -115,6 +130,9 @@ fn parse_proprietary(vec: Vec<u8>) -> Option<Concept2Response> {
     Some(Concept2Response::ProprietaryCommand(proprietary_vec))
 }
 
+/// Takes an iterator of bytes, takes a single chunk of bytes according to the
+/// `bytes` field of the frame, and constructs a `ResponseFrame` struct to pass
+/// to the `parse` method.
 fn parse_c2r<'a, T>(iter: &mut T) -> Option<Concept2Response>
 where
     T: Iterator<Item = &'a u8>,
@@ -139,6 +157,8 @@ where
     }
 }
 
+/// Applies `parse_c2r` on an iterator of bytes until no more `Concept2Response` structs can
+/// be constructed from the bytes.
 fn parse_helper<'a>(iter: &mut impl Iterator<Item = &'a u8>) -> Option<Vec<Concept2Response>> {
     let mut result = vec![];
     while let Some(c2r) = parse_c2r(iter) {
@@ -151,6 +171,10 @@ fn checksum_iter<'a>(iter: impl Iterator<Item = &'a u8>) -> u8 {
     iter.fold(0, |acc, &x| x ^ acc)
 }
 
+/// As mentioned in `concept2command.rs`, `0xf0` through `0xf3` are special control
+/// bytes. As a result, the data fields cannot contain these bytes. So, the Concept2
+/// machine replaces data bytes with these values with `0xf3`, followed by a number.
+/// This function replaces these "stuffed" pairs of bytes with the actual data value.
 fn unpack_bytes(v: &[u8]) -> Vec<u8> {
     let mut vec_iter = v.iter();
     // Skipping the report number and the start flag.
@@ -177,6 +201,8 @@ fn unpack_bytes(v: &[u8]) -> Vec<u8> {
     result
 }
 
+/// Single public method for taking a vector of bytes and
+/// returning a vector of `Concept2Response` frames.
 pub fn parse_vec(v: &[u8]) -> Option<Vec<Concept2Response>> {
     let unpacked_vec: Vec<u8> = unpack_bytes(v);
     let start_flag = unpacked_vec.get(1);

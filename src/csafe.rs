@@ -20,6 +20,8 @@ pub struct CSAFEFrame {
     commands: Vec<Concept2Command>,
 }
 
+/// Checksum computes a single byte with exclusive OR on
+/// all Concept2Commands in the slice.
 fn checksum(commands: &[Concept2Command]) -> u8 {
     commands
         .iter()
@@ -27,6 +29,12 @@ fn checksum(commands: &[Concept2Command]) -> u8 {
         .fold(0, |x, y| x ^ y)
 }
 
+/// stuff_bytes is CSAFE's response to the fact that its start and end flags
+/// could very well be actual data - it's very possible that `0xf0` could be
+/// some meter total or whatever. As a result, whenever one of these bytes
+/// is in data, the byte is replaced with *two* bytes - `0xf3` and another
+/// byte. This is also done in reverse from the Concept2 machine; the response
+/// will have to be *unstuffed*.
 fn stuff_bytes(x: u8) -> Box<dyn Iterator<Item = u8>> {
     match x {
         0xf0 => Box::new(vec![0xf3, 0x00].into_iter()),
@@ -36,10 +44,13 @@ fn stuff_bytes(x: u8) -> Box<dyn Iterator<Item = u8>> {
         x => Box::new(std::iter::once(x)),
     }
 }
+
 impl CSAFEFrame {
     pub fn new(cmds: Vec<Concept2Command>) -> CSAFEFrame {
         CSAFEFrame { commands: cmds }
     }
+    /// Resolves a CSAFEFrame to a vector of bytes. Every frame must start with a start flag,
+    /// contain the byte representation of each CSAFE command, a checksum, and the stop flag.
     pub fn to_vec(&self) -> Vec<u8> {
         std::iter::once(consts::CSAFE_START_FLAG)
             .chain(

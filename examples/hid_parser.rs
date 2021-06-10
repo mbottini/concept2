@@ -15,6 +15,8 @@ fn main() {
                             concept2::concept2command::Concept2ProprietaryCommand::GetWorkoutType,
                         ]),
                         concept2::concept2command::Concept2Command::GetSerialNumber,
+                        concept2::concept2command::Concept2Command::GetSerialNumber,
+                        concept2::concept2command::Concept2Command::GetSerialNumber,
                     ]);
                     let result: HidResult<Vec<u8>> = device.open_device(&api).and_then(|dev| {
                         concept2::hid_csafe::write_read_csafe_cmd(&dev, 2, &csafe_cmd)
