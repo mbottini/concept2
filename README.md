@@ -82,3 +82,11 @@ and manually parsing the resulting data to make sure that it was correct.
 to make sure that it was parsed correctly.
 * Running the test again with `hid_parser` to make sure that the actual bytes
 from the machine were parsed correctly.
+
+# License
+
+Licensed under
+
+MIT license
+   ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
